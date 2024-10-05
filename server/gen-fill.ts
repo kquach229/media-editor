@@ -6,7 +6,7 @@ import z from 'zod';
 import { Cloudinary } from '@cloudinary/url-gen';
 
 cloudinary.config({
-  cloud_name: 'dwja3p504',
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET,
 });
