@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const format = searchParams.get('format');
   const activeUrl = searchParams.get('url');
 
-  // retrigger deploy
+  // retrigger deploy again
 
   if (!publicId) {
     return new NextResponse('Missing publicId parameter', { status: 400 });
