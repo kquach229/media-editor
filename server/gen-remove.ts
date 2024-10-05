@@ -23,6 +23,7 @@ async function checkImageProcessing(url: string) {
     }
     return false;
   } catch (error) {
+    console.error('Error checking image processing:', error);
     return false;
   }
 }
@@ -30,24 +31,30 @@ async function checkImageProcessing(url: string) {
 export const genRemove = actionClient
   .schema(genRemoveSchema)
   .action(async ({ parsedInput: { prompt, activeImage } }) => {
-    const parts = activeImage.split('/upload/');
-    //https://res.cloudinary.com/demo/image/upload/e_gen_remove:prompt_fork/docs/avocado-salad.jpg
-    const removeUrl = `${parts[0]}/upload/e_gen_remove:${prompt}/${parts[1]}`;
-    // Poll the URL to check if the image is processed
-    let isProcessed = false;
-    const maxAttempts = 20;
-    const delay = 1000; // 1 second
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      isProcessed = await checkImageProcessing(removeUrl);
-      if (isProcessed) {
-        break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
+    try {
+      const parts = activeImage.split('/upload/');
+      const removeUrl = `${parts[0]}/upload/e_gen_remove:${prompt}/${parts[1]}`;
 
-    if (!isProcessed) {
-      throw new Error('Image processing timed out');
+      // Poll the URL to check if the image is processed
+      let isProcessed = false;
+      const maxAttempts = 20;
+      const delay = 1000; // 1 second
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        isProcessed = await checkImageProcessing(removeUrl);
+        if (isProcessed) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      if (!isProcessed) {
+        throw new Error('Image processing timed out');
+      }
+
+      console.log('Image processed successfully:', removeUrl);
+      return { success: removeUrl };
+    } catch (error) {
+      console.error('Error during genRemove action:', error);
+      throw new Error('genRemove action failed');
     }
-    console.log(removeUrl);
-    return { success: removeUrl };
   });

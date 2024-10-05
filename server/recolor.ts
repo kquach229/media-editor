@@ -24,6 +24,7 @@ async function checkImageProcessing(url: string) {
     }
     return false;
   } catch (error) {
+    console.error('Error checking image processing:', error);
     return false;
   }
 }
@@ -31,24 +32,30 @@ async function checkImageProcessing(url: string) {
 export const recolorImage = actionClient
   .schema(recolorSchema)
   .action(async ({ parsedInput: { tag, color, activeImage } }) => {
-    const parts = activeImage.split('/upload/');
-    const recolorUrl = `${parts[0]}/upload/e_gen_recolor:${tag};${color}/${parts[1]}`;
+    try {
+      const parts = activeImage.split('/upload/');
+      const recolorUrl = `${parts[0]}/upload/e_gen_recolor:${tag};${color}/${parts[1]}`;
 
-    // Poll the URL to check if the image is processed
-    let isProcessed = false;
-    const maxAttempts = 20;
-    const delay = 1000; // 1 second
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      isProcessed = await checkImageProcessing(recolorUrl);
-      if (isProcessed) {
-        break;
+      // Poll the URL to check if the image is processed
+      let isProcessed = false;
+      const maxAttempts = 20;
+      const delay = 1000; // 1 second
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        isProcessed = await checkImageProcessing(recolorUrl);
+        if (isProcessed) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
 
-    if (!isProcessed) {
-      throw new Error('Image processing timed out');
+      if (!isProcessed) {
+        throw new Error('Image processing timed out');
+      }
+
+      console.log('Image processed successfully:', recolorUrl);
+      return { success: recolorUrl };
+    } catch (error) {
+      console.error('Error during recolorImage action:', error);
+      throw new Error('recolorImage action failed');
     }
-    console.log(recolorUrl);
-    return { success: recolorUrl };
   });

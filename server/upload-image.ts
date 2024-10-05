@@ -21,15 +21,17 @@ type UploadResult =
 export const uploadImage = actionClient
   .schema(formData)
   .action(async ({ parsedInput: { image } }): Promise<UploadResult> => {
-    console.log(image);
+    console.log('Received image for upload:', image);
+
     const formImage = image.get('image');
 
     if (!formImage) return { error: 'No image provided' };
-    if (!image) return { error: 'No image provided' };
+    if (!(formImage instanceof File)) return { error: 'Invalid image file' };
 
     const file = formImage as File;
 
     try {
+      // Convert the file to a buffer
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
@@ -52,6 +54,7 @@ export const uploadImage = actionClient
           }
         );
 
+        // Send the buffer to the upload stream
         uploadStream.end(buffer);
       });
     } catch (error) {

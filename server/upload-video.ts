@@ -21,15 +21,17 @@ type UploadResult =
 export const uploadVideo = actionClient
   .schema(formData)
   .action(async ({ parsedInput: { video } }): Promise<UploadResult> => {
-    console.log(video);
+    console.log('Received video for upload:', video);
+
     const formVideo = video.get('video');
 
     if (!formVideo) return { error: 'No video provided' };
-    if (!video) return { error: 'No video provided' };
+    if (!(formVideo instanceof File)) return { error: 'Invalid video file' };
 
     const file = formVideo as File;
 
     try {
+      // Convert the file to a buffer
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
@@ -53,10 +55,11 @@ export const uploadVideo = actionClient
           }
         );
 
+        // Send the buffer to the upload stream
         uploadStream.end(buffer);
       });
     } catch (error) {
-      console.error('Error processing file:', error);
+      console.error('Error processing video file:', error);
       return { error: 'Error processing file' };
     }
   });

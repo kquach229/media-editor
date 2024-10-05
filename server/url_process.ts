@@ -1,11 +1,11 @@
 export async function checkImageProcessing(url: string) {
   try {
-    const response = await fetch(url)
+    const response = await fetch(url);
     if (response.ok) {
-      return true
+      return true;
     }
-    return false
+    return false;
   } catch (error) {
-    return false
+    return false;
   }
 }

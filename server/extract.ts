@@ -27,6 +27,7 @@ async function checkImageProcessing(url: string) {
     }
     return false;
   } catch (error) {
+    console.error('Error checking image processing:', error);
     return false;
   }
 }
@@ -37,35 +38,40 @@ export const extractImage = actionClient
     async ({
       parsedInput: { prompts, activeImage, multiple, mode, invert, format },
     }) => {
-      const form = activeImage.split(format);
-      const pngConvert = form[0] + 'png';
-      const parts = pngConvert.split('/upload/');
+      try {
+        const form = activeImage.split(format);
+        const pngConvert = form[0] + 'png';
+        const parts = pngConvert.split('/upload/');
 
-      let extractParams = `prompt_(${prompts
-        .map((p) => encodeURIComponent(p))
-        .join(';')})`;
-      if (multiple) extractParams += ';multiple_true';
-      if (mode === 'mask') extractParams += ';mode_mask';
-      if (invert) extractParams += ';invert_true';
+        let extractParams = `prompt_(${prompts
+          .map((p) => encodeURIComponent(p))
+          .join(';')})`;
+        if (multiple) extractParams += ';multiple_true';
+        if (mode === 'mask') extractParams += ';mode_mask';
+        if (invert) extractParams += ';invert_true';
 
-      const extractUrl = `${parts[0]}/upload/e_extract:${extractParams}/${parts[1]}`;
+        const extractUrl = `${parts[0]}/upload/e_extract:${extractParams}/${parts[1]}`;
 
-      // Poll the URL to check if the image is processed
-      let isProcessed = false;
-      const maxAttempts = 20;
-      const delay = 1000; // 1 second
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        isProcessed = await checkImageProcessing(extractUrl);
-        if (isProcessed) {
-          break;
+        // Poll the URL to check if the image is processed
+        let isProcessed = false;
+        const maxAttempts = 20;
+        const delay = 1000; // 1 second
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          isProcessed = await checkImageProcessing(extractUrl);
+          if (isProcessed) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
 
-      if (!isProcessed) {
-        throw new Error('Image processing timed out');
+        if (!isProcessed) {
+          throw new Error('Image processing timed out');
+        }
+        console.log('Image processed successfully:', extractUrl);
+        return { success: extractUrl };
+      } catch (error) {
+        console.error('Error during image extraction:', error);
+        throw new Error('Image extraction failed');
       }
-      console.log(extractUrl);
-      return { success: extractUrl };
     }
   );

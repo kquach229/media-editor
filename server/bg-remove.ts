@@ -23,6 +23,7 @@ async function checkImageProcessing(url: string) {
     }
     return false;
   } catch (error) {
+    console.error('Error checking image processing:', error);
     return false;
   }
 }
@@ -30,27 +31,33 @@ async function checkImageProcessing(url: string) {
 export const bgRemoval = actionClient
   .schema(recolorSchema)
   .action(async ({ parsedInput: { activeImage, format } }) => {
-    const form = activeImage.split(format);
-    const pngConvert = form[0] + 'png';
-    const parts = pngConvert.split('/upload/');
-    const removeUrl = `${parts[0]}/upload/e_background_removal/${parts[1]}`;
+    try {
+      const form = activeImage.split(format);
+      const pngConvert = form[0] + 'png';
+      const parts = pngConvert.split('/upload/');
+      const removeUrl = `${parts[0]}/upload/e_background_removal/${parts[1]}`;
 
-    // Poll the URL to check if the image is processed
-    let isProcessed = false;
-    const maxAttempts = 20;
-    const delay = 1000; // 1 second
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      isProcessed = await checkImageProcessing(removeUrl);
-      console.log(removeUrl);
-      if (isProcessed) {
-        break;
+      // Poll the URL to check if the image is processed
+      let isProcessed = false;
+      const maxAttempts = 20;
+      const delay = 1000; // 1 second
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        isProcessed = await checkImageProcessing(removeUrl);
+        console.log(removeUrl);
+        if (isProcessed) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
 
-    if (!isProcessed) {
-      throw new Error('Image processing timed out');
+      if (!isProcessed) {
+        throw new Error('Image processing timed out');
+      }
+
+      console.log('Image processed successfully:', removeUrl);
+      return { success: removeUrl };
+    } catch (error) {
+      console.error('Error during background removal:', error);
+      throw new Error('Background removal failed');
     }
-    console.log(removeUrl);
-    return { success: removeUrl };
   });

@@ -26,6 +26,7 @@ async function checkImageProcessing(url: string) {
     }
     return false;
   } catch (error) {
+    console.error('Error checking image processing:', error);
     return false;
   }
 }
@@ -33,25 +34,32 @@ async function checkImageProcessing(url: string) {
 export const genFill = actionClient
   .schema(genFillSchema)
   .action(async ({ parsedInput: { activeImage, aspect, width, height } }) => {
-    const parts = activeImage.split('/upload/');
+    try {
+      const parts = activeImage.split('/upload/');
 
-    const fillUrl = `${parts[0]}/upload/ar_${aspect},b_gen_fill,c_pad,w_${width},h_${height}/${parts[1]}`;
-    console.log(genFill);
+      const fillUrl = `${parts[0]}/upload/ar_${aspect},b_gen_fill,c_pad,w_${width},h_${height}/${parts[1]}`;
+      console.log('Generated fill URL:', fillUrl);
 
-    // Poll the URL to check if the image is processed
-    let isProcessed = false;
-    const maxAttempts = 20;
-    const delay = 1000; // 1 second
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      isProcessed = await checkImageProcessing(fillUrl);
-      if (isProcessed) {
-        break;
+      // Poll the URL to check if the image is processed
+      let isProcessed = false;
+      const maxAttempts = 20;
+      const delay = 1000; // 1 second
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        isProcessed = await checkImageProcessing(fillUrl);
+        if (isProcessed) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
 
-    if (!isProcessed) {
-      return { error: 'Image processing failed' };
+      if (!isProcessed) {
+        throw new Error('Image processing timed out');
+      }
+
+      console.log('Image processed successfully:', fillUrl);
+      return { success: fillUrl };
+    } catch (error) {
+      console.error('Error during genFill action:', error);
+      throw new Error('genFill action failed');
     }
-    return { success: fillUrl };
   });

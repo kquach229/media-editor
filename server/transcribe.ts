@@ -26,7 +26,7 @@ async function checkTranscriptionStatus(publicId: string): Promise<string> {
     ) {
       return result.info.raw_convert.google_speech.status;
     }
-    return 'pending'; // Assume pending if we can't find status
+    return 'pending'; // Assume pending if no status is available
   } catch (error) {
     console.error('Error checking transcription status:', error);
     throw new Error('Failed to check transcription status');
@@ -53,7 +53,7 @@ export const initiateTranscription = actionClient
   .action(async ({ parsedInput: { publicId } }) => {
     console.log('Initiating transcription for:', publicId);
     try {
-      // Initiate transcription
+      // Start transcription
       await cloudinary.api.update(publicId, {
         resource_type: 'video',
         raw_convert: 'google_speech',
@@ -70,21 +70,27 @@ export const initiateTranscription = actionClient
 
         if (status === 'complete') {
           const subtitledVideoUrl = generateSubtitledVideoUrl(publicId);
+          console.log(
+            'Transcription completed. Subtitled video URL:',
+            subtitledVideoUrl
+          );
           return { success: 'Transcription completed', subtitledVideoUrl };
         } else if (status === 'failed') {
+          console.error('Transcription failed for:', publicId);
           return { error: 'Transcription failed' };
         }
 
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
+      console.warn('Transcription timed out for:', publicId);
       return { error: 'Transcription timed out' };
     } catch (error) {
-      console.error('Error in transcription process:', error);
+      console.error('Error during transcription process:', error);
       return {
-        error:
-          'Error in transcription process: ' +
-          (error instanceof Error ? error.message : String(error)),
+        error: `Error in transcription process: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   });
