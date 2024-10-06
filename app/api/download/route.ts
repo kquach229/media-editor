@@ -3,8 +3,8 @@ import cloudinary from 'cloudinary';
 import { checkImageProcessing } from '@/server/url_process';
 
 cloudinary.v2.config({
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
   cname: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
 });
 

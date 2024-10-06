@@ -5,7 +5,7 @@ import { actionClient } from '@/server/safe-action';
 import z from 'zod';
 
 cloudinary.config({
-  cloud_name: 'dwja3p504',
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET,
 });
